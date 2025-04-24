@@ -815,8 +815,8 @@
     <div class="container">
       <!-- Mode Switch Buttons -->
       <div id="mode-buttons">
-        <button id="mode-experience" class="mode-button active">Transcription Mode</button>
-        <button id="mode-input" class="mode-button">Free-input Mode</button>
+        <button id="mode-experience" class="mode-button active">Demo</button>
+        <button id="mode-input" class="mode-button">Free-input</button>
       </div>
     </div>
 
@@ -835,7 +835,7 @@
     <!-- ============ Transcription Mode ============ -->
     <div class="container">
       <div class="card" id="experience-mode">
-        <h3>Transcription Mode <i class="fas fa-microphone mic-icon"></i><span class="recording-status-dot"></span></h3>
+        <h3>Demo <i class="fas fa-microphone mic-icon"></i><span class="recording-status-dot"></span></h3>
         <div class="card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <button class="nav-button" id="prev-sentence" style="visibility:hidden;">←</button>
@@ -859,7 +859,7 @@
               color:#fff;
               box-shadow:0 2px 6px rgba(0,0,0,0.2);
               cursor:pointer;
-            ">Restore Error Sentence</button>
+            ">Restore Erroneous Sentence</button>
             <button id="skip-sentence-button" style="
               flex:1;
               padding:20px;
@@ -893,7 +893,7 @@
     <div class="container">
       <div class="card" id="input-mode" style="display:none;">
         <h3>
-          Free-Input Mode 
+          Free-Input
           <i class="fas fa-microphone mic-icon"></i>
           <span class="recording-status-dot"></span>
           <button class="clear-button" id="clear-text-button">Clear</button>
@@ -990,8 +990,8 @@ Hi, how are you? Meet me on Wednesday. </div>
     let isDraggingAndRecording = false; // new variable for marking drag+record
     let useWebkitSpeech = true;
     let maxRecordingTime = 10000; 
-    let hardStopTimer = null; // 新增硬停止计时器
-    let recordingStartTime = null; // 记录录音开始时间
+    let hardStopTimer = null; 
+    let recordingStartTime = null; 
     let currentSentenceInfo = null; // store current sentence details
 
     // DOM Elements
@@ -2901,7 +2901,7 @@ Hi, how are you? Meet me on Wednesday. </div>
       const inputModeContainer = document.getElementById("input-mode");
       if (inputModeContainer) {
         inputModeContainer.insertBefore(
-          addTipBox("Tap on the place you want to edit, till the mic icon is green, then speak correction. "),
+          addTipBox("Hold on the place you want to edit a bit till the mic icon is green, then speak correction. "),
           inputModeContainer.firstChild
         );
       }
