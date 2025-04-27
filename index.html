@@ -994,13 +994,13 @@ Hi, how are you? Meet me on Wednesday. </div>
     let selectedSentence = ""; // used in Transcription mode, also referenced by some universal functions
     let isDraggingAndRecording = false; // new variable for marking drag+record
     let useWebkitSpeech = true;
-    let maxRecordingTime = 10000; 
+    let maxRecordingTime = 20000; // 修改为20秒，允许用户说更长的语音内容
     let hardStopTimer = null; 
     let recordingStartTime = null;
     let currentSentenceInfo = null; // store current sentence details
     let silenceTimer = null; 
     let lastSpeechTime = null; 
-    let silenceThreshold = 1000; // Added: Stop recording after 1 second of silence
+    let silenceThreshold = 1000; // 修改为2秒，给用户更多的思考时间
 
     // DOM Elements
     const monitoringCard = document.getElementById("monitoring-card");
@@ -1224,139 +1224,22 @@ Hi, how are you? Meet me on Wednesday. </div>
           // Record the last speech time for the silence timer
           lastSpeechTime = Date.now();
 
-          // Reset the timer: automatically stop after 1 second of no speech
+          // Reset the timer: automatically stop after silence threshold
           clearTimeout(silenceTimer);
-          silenceTimer = setTimeout(closeBySilence, 1000);
+          silenceTimer = setTimeout(closeBySilence, silenceThreshold);
         };
 
         recognition.onend = () => {
           console.log("Recognition onend triggered, isRecording:", isRecording, "current time:", new Date().toISOString());
           
-          if (recordingStartTime) {
-            const duration = new Date() - recordingStartTime;
-          }
-          
-          if (isRecording && voiceInputSpan.innerText.trim() === "") {
-            console.log("WebSpeechAPI restart");
-            try {
-              const shouldRestart = isRecording; 
-              isRecording = false;
-              
-              setTimeout(() => {
-                if (shouldRestart && !isRecording) {
-                  isRecording = true;
-                  isListening = true;
-                  try {
-                    recognition.start();
-                    console.log("prolong succeed"); 
-                  } catch (e) {
-                    console.error("prolong failed:", e);
-                    isRecording = false;
-                    isListening = false;
-                    endTapSay();
-                  }
-                }
-              }, 100);
-            } catch (e) {
-              console.error("restart fail:", e);
-
-              isRecording = false;
-              isListening = false;
-              micStatusSpan.innerHTML = "🔴 Stopped";
-              micStatusSpan.className = "";
-              removeCursor();
-
-              // Update the status indicator dot and mic icon
-              const dots = document.querySelectorAll('.recording-status-dot');
-              const micIcons = document.querySelectorAll('.mic-icon');
-              dots.forEach(dot => {
-                dot.classList.remove('recording');
-              });
-              micIcons.forEach(icon => {
-                icon.classList.remove('recording');
-              });
-
-              if (voiceInputSpan.innerText.trim()) {
-                console.log("finalizeTapSay");
-                
-                // Check if the result has already been processed in onresult
-                if (!recognition || !recognition.isAfterDragging) {
-                  setTimeout(finalizeTapSay, 100);
-                }
-              } else {
-                console.log("no voice input endTapSay");
-                endTapSay();
-              }
-            }
-          } else {
-            console.log("normal recording"); 
-            
-            isRecording = false;
-            isListening = false;
-            micStatusSpan.innerHTML = "🔴 Stopped";
-            micStatusSpan.className = "";
-            removeCursor();
-
-            // Update the status indicator dot and mic icon
-            const dots = document.querySelectorAll('.recording-status-dot');
-            const micIcons = document.querySelectorAll('.mic-icon');
-            dots.forEach(dot => {
-              dot.classList.remove('recording');
-            });
-            micIcons.forEach(icon => {
-              icon.classList.remove('recording');
-            });
-
-            if (voiceInputSpan.innerText.trim()) {
-              console.log("finalizeTapSay");
-              
-              // Check if the result has already been processed in onresult
-              if (!recognition || !recognition.isAfterDragging) {
-                setTimeout(finalizeTapSay, 100);
-              }
-            } else {
-              console.log("endTapSay");
-              endTapSay();
-            }
-          }
-        };
-
-        recognition.onerror = (event) => {
-          console.error("[Global] recognition error =>", event.error);
-          
-          if (event.error === 'no-speech' && isRecording && voiceInputSpan.innerText.trim() === "") {
-            console.log("no-speech");
-            try {
-              isRecording = false; 
-              recognition.stop();
-              
-              setTimeout(() => {
-                if (!isRecording) { 
-                  isRecording = true;
-                  try {
-                    recognition.start();
-                    console.log("reprolong after no-speech)");
-                  } catch(e) {
-                    console.error("fail:", e);
-                    isRecording = false;
-                    endTapSay();
-                  }
-                }
-              }, 100);
-              
-              return; 
-            } catch (e) {
-              console.error("no-speech restart fail:", e);
-            }
-          }
-          
+          // 将所有状态重置
           isRecording = false;
           isListening = false;
-          micStatusSpan.innerHTML = "🔴 Error";
+          micStatusSpan.innerHTML = "🔴 Stopped";
           micStatusSpan.className = "";
           removeCursor();
 
-          // Update the status indicator dot and mic icon
+          // 更新录音状态指示器
           const dots = document.querySelectorAll('.recording-status-dot');
           const micIcons = document.querySelectorAll('.mic-icon');
           dots.forEach(dot => {
@@ -1366,11 +1249,46 @@ Hi, how are you? Meet me on Wednesday. </div>
             icon.classList.remove('recording');
           });
 
+          // 如果有语音输入，处理结果
           if (voiceInputSpan.innerText.trim()) {
             console.log("finalizeTapSay");
+            
+            // 检查是否已经在onresult中处理过结果
+            if (!recognition || !recognition.isAfterDragging) {
+              setTimeout(finalizeTapSay, 100);
+            }
+          } else {
+            console.log("endTapSay - no voice input");
+            endTapSay();
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.error("[Global] recognition error =>", event.error);
+          
+          // 处理错误状态
+          isRecording = false;
+          isListening = false;
+          micStatusSpan.innerHTML = "🔴 Error";
+          micStatusSpan.className = "";
+          removeCursor();
+
+          // 更新录音状态指示器
+          const dots = document.querySelectorAll('.recording-status-dot');
+          const micIcons = document.querySelectorAll('.mic-icon');
+          dots.forEach(dot => {
+            dot.classList.remove('recording');
+          });
+          micIcons.forEach(icon => {
+            icon.classList.remove('recording');
+          });
+
+          // 如果有语音输入，处理结果
+          if (voiceInputSpan.innerText.trim()) {
+            console.log("finalizeTapSay after error");
             setTimeout(finalizeTapSay, 100);
           } else {
-            console.log("no voice input endTapSay");
+            console.log("endTapSay - no voice input after error");
             endTapSay();
           }
         };
@@ -3133,18 +3051,35 @@ Hi, how are you? Meet me on Wednesday. </div>
     }
 
     function stopRecording() {
+      // 清除所有计时器
       clearTimeout(hardStopTimer);
       clearTimeout(silenceTimer);
       silenceTimer = null;
 
+      // 重置录音状态
       isRecording = false;
+      isListening = false;
+      
+      // 停止语音识别
       if (recognition) {
         try { recognition.stop(); } catch(e){}
       }
 
+      // 更新UI状态
       micStatusSpan.innerHTML = "🔴 Stopped";
-      document.querySelectorAll('.recording-status-dot,.mic-icon')
-              .forEach(el => el.classList.remove('recording'));
+      micStatusSpan.className = "";
+      
+      // 更新所有录音状态指示器
+      const dots = document.querySelectorAll('.recording-status-dot');
+      const micIcons = document.querySelectorAll('.mic-icon');
+      dots.forEach(dot => {
+        dot.classList.remove('recording');
+      });
+      micIcons.forEach(icon => {
+        icon.classList.remove('recording');
+      });
+      
+      logEvent("录音已停止");
     }
 
     function handleRecognitionResult(transcript, relativePosition = 0) {
